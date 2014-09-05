@@ -1,7 +1,7 @@
 #### wxPython Custom Button ####
 #
 # File: custom_button.py
-# Creation date: 2014-09-03
+# Creation date: 2014-09-02
 # Author: Daniel Ramos
 # Email: daniel_p_em@outlook.com
 #

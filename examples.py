@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import wx
 
 from custom_button import CustomButton as CustomBtn
@@ -218,7 +220,7 @@ class Frame(wx.Frame):
 
         btn14.set_bmp((wx.Bitmap('img/icon2.png'), 'left'))
 
-        # Fix size
+        # Fix size.
         btn14.set_padding((0, 1, 0, 0))
 
         btn14.set_border(None)
@@ -237,7 +239,7 @@ class Frame(wx.Frame):
 
         btn15.set_foreground_color('#1A0DAB')
 
-        # Fix size
+        # Fix size.
         btn15.set_padding((0, 1, 0, 0))
 
         btn15.set_border(None)
