@@ -7,6 +7,7 @@ Clase para crear botones personalizados en wxPython. Pueden usarla libremente en
 
 Nota importante: por un problema con los sizers que no estoy sabiendo manejarlo, hay que añadir SendSizeEvent() para forzar el evento size y dibujar los botones correctamente... haber si logro mejorar eso.
 
+-
 
 Português:
 
