@@ -88,15 +88,14 @@ class CustomButton(CONTROL):
         self.label = label
         self.Refresh()
 
-    def set_bmp(self, normal, bmp_hover=None, bmp_focus=None,
-                bmp_mouse_down=None):
+    def set_bmp(self, normal, hover=None, focus=None, mouse_down=None):
 
         # bmp = (bmp, position)
         # position: 'top', 'right', 'bottom', 'left'.
         self.bmp_normal = normal
-        self.bmp_hover = bmp_hover
-        self.bmp_focus = bmp_focus
-        self.bmp_mouse_down = bmp_mouse_down
+        self.bmp_hover = hover
+        self.bmp_focus = focus
+        self.bmp_mouse_down = mouse_down
 
         self.Refresh()
 
@@ -157,7 +156,7 @@ class CustomButton(CONTROL):
 
         self.Refresh()
 
-    def set_border(self, normal=None, hover=None, focus=None, mouse_down=None):
+    def set_border(self, normal, hover=None, focus=None, mouse_down=None):
         # Border: px, colour, radius.
         self.border = normal
         self.border_hover = hover
