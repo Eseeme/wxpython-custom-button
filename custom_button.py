@@ -10,10 +10,17 @@
 import wx
 
 
-class CustomButton(wx.Panel):
+if 'phoenix' in wx.PlatformInfo:
+    CONTROL = wx.Control
+else:
+    CONTROL = wx.PyControl
 
-    def __init__(self, parent, id=wx.ID_ANY, label='', *args, **kwargs):
-        wx.Panel.__init__(self, parent, id, *args, **kwargs)
+
+class CustomButton(CONTROL):
+
+    def __init__(self, parent, id=wx.ID_ANY, label='', pos=wx.DefaultPosition,
+                 size=wx.DefaultSize, style=wx.NO_BORDER, *args, **kwargs):
+        CONTROL.__init__(self, parent, id, pos, size, style, *args, **kwargs)
 
         self.parent = parent
         self.label = label
@@ -34,6 +41,12 @@ class CustomButton(wx.Panel):
         self.txt_shadow_focus = None
         self.txt_shadow_mouse_down = None
 
+        font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+        self.font_normal = font
+        self.font_hover = None
+        self.font_focus = None
+        self.font_mouse_down = None
+
         # border = (px, colour, radius)
         self.border = (1, '#333333', 0)
         self.border_hover = None
@@ -42,12 +55,6 @@ class CustomButton(wx.Panel):
 
         # padding = (top, right, bottom, left)
         self.padding = (0, 0, 0, 0)
-
-        font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
-        self.font_normal = font
-        self.font_hover = None
-        self.font_focus = None
-        self.font_mouse_down = None
 
         self.bg_type = 'color'
         parent_bg = self.parent.GetBackgroundColour()
@@ -75,7 +82,6 @@ class CustomButton(wx.Panel):
         self.Bind(wx.EVT_LEFT_DOWN, self._on_mouse_down)
         self.Bind(wx.EVT_LEFT_UP, self._on_mouse_up)
         self.Bind(wx.EVT_ERASE_BACKGROUND, self._on_erase_background)
-        self.Bind(wx.EVT_SIZE, self._on_size)
         self.Bind(wx.EVT_PAINT, self._on_paint)
 
     def set_label(self, label):
@@ -176,7 +182,7 @@ class CustomButton(wx.Panel):
         self.Refresh()
 
     def set_size(self, size):
-        self.size = size
+        self.SetMinSize(size)
         self.Refresh()
 
     def _on_set_focus(self, event):
@@ -215,20 +221,16 @@ class CustomButton(wx.Panel):
     def _on_erase_background(self, event):
         pass
 
-    def _on_size(self, event):
-        dc = wx.ClientDC(self)
-        bdc = wx.BufferedDC(dc)
-        self._redraw(bdc)
-        self.Refresh()
-
     def _on_paint(self, event):
-        bdc = wx.BufferedPaintDC(self)
-        self._redraw(bdc)
-
-    def _redraw(self, bdc):
-        bdc.Clear()
-        gcdc = wx.GCDC(bdc)
+        dc = wx.BufferedPaintDC(self)
+        gcdc = wx.GCDC(dc)
         gc = gcdc.GetGraphicsContext()
+
+        dc.Clear()
+
+
+        # Get button size.
+        w, h = self.GetSize()
 
 
         # Set font.
@@ -243,6 +245,7 @@ class CustomButton(wx.Panel):
 
 
         # Get txt_w, txt_h, bmp_w, bmp_h and bmp position.
+
         txt_w, txt_h = gcdc.GetTextExtent(self.label)
 
         if self.mouse_down and self.bmp_mouse_down is not None:
@@ -263,44 +266,6 @@ class CustomButton(wx.Panel):
             position = bmp[1]
         else:
             bmp = False
-
-
-        # Set minimum size.
-
-        if bmp:
-            if position == 'left' or position == 'right':
-                if bmp_h > txt_h:
-                    size = (self.padding[3] + bmp_w + txt_w + self.padding[1],
-                            self.padding[0] + bmp_h + self.padding[2])
-                else:
-                    size = (self.padding[3] + bmp_w + txt_w + self.padding[1],
-                            self.padding[0] + txt_h + self.padding[2])
-            else:
-                if bmp_w > txt_w:
-                    size = (self.padding[3] + bmp_w + self.padding[1],
-                            self.padding[0] + bmp_h + txt_h + self.padding[2])
-                else:
-                    size = (self.padding[3] + txt_w + self.padding[1],
-                            self.padding[0] + bmp_h + txt_h + self.padding[2])
-        else:
-            size = (self.padding[3] + txt_w + self.padding[1],
-                    self.padding[0] + txt_h + self.padding[2])
-
-        if self.size is None:
-            self.SetMinSize(size)
-        else:
-            if self.size[0] > 0 and self.size[1] == -1:
-                self.SetMinSize((self.size[0], size[1]))
-            elif self.size[0] == -1 and self.size[1] > 0:
-                self.SetMinSize((size[0], self.size[1]))
-            elif self.size[0] == -1 and self.size[1] == -1:
-                self.SetMinSize(size)
-            else:
-                self.SetMinSize(self.size)
-
-
-        # Get button size.
-        w, h = self.GetSize()
 
 
         # Set background (brush).
@@ -390,49 +355,53 @@ class CustomButton(wx.Panel):
             gcdc.SetBrush(wx.Brush(self.parent.GetBackgroundColour()))
 
 
-        # Set border (pen).
+        # Set border variables.
 
         # Mouse down
         if self.mouse_down and self.border_mouse_down is not None:
             if self.border_mouse_down[0] == 0:
-                gcdc.SetPen(wx.TRANSPARENT_PEN)
+                border = ('#000000', 0)
             else:
-                gcdc.SetPen(wx.Pen(self.border_mouse_down[1],
-                                   self.border_mouse_down[0],
-                            wx.SOLID))
+                border = (self.border_mouse_down[1], self.border_mouse_down[0], wx.SOLID)
             radius = self.border_mouse_down[2]
 
         # Focus
         elif self.focus and self.border_focus is not None:
             if self.border_focus[0] == 0:
-                gcdc.SetPen(wx.TRANSPARENT_PEN)
+                border = ('#000000', 0)
             else:
-                gcdc.SetPen(wx.Pen(self.border_focus[1], self.border_focus[0],
-                            wx.SOLID))
+                border = (self.border_focus[1], self.border_focus[0], wx.SOLID)
             radius = self.border_focus[2]
 
         # Hover
         elif self.mouse_in and self.border_hover is not None:
             if self.border_hover[0] == 0:
-                gcdc.SetPen(wx.TRANSPARENT_PEN)
+                border = ('#000000', 0)
             else:
-                gcdc.SetPen(wx.Pen(self.border_hover[1], self.border_hover[0],
-                            wx.SOLID))
+                border = (self.border_hover[1], self.border_hover[0], wx.SOLID)
             radius = self.border_hover[2]
 
         # Normal
         elif self.border is not None:
             if self.border[0] == 0:
-                gcdc.SetPen(wx.TRANSPARENT_PEN)
+                border = ('#000000', 0)
             else:
-                gcdc.SetPen(wx.Pen(self.border[1], self.border[0],
-                            wx.SOLID))
+                border = (self.border[1], self.border[0], wx.SOLID)
             radius = self.border[2]
 
         # No border
         else:
-            gcdc.SetPen(wx.TRANSPARENT_PEN)
+            border = ('#000000', 0)
             radius = 0
+
+
+        # Set border (pen).
+
+        if border[1] != 0:
+            gcdc.SetPen(wx.Pen(border[0], border[1]))
+        else:
+            gcdc.SetPen(wx.TRANSPARENT_PEN)
+
 
         gcdc.DrawRoundedRectangle(0, 0, w, h, radius)
 
@@ -449,14 +418,14 @@ class CustomButton(wx.Panel):
                     txt_x = (w - txt_w - bmp_w) / 2 + bmp_w
                     txt_y = (h - txt_h) / 2
                 else:
-                    bmp_x = self.padding[3]
-                    bmp_y = self.padding[0]
+                    bmp_x = border[1] + self.padding[3]
+                    bmp_y = border[1] + self.padding[0]
 
                     txt_x = self.padding[3] + bmp_w
                     if bmp_h > txt_h:
-                        txt_y = (bmp_h - txt_h) / 2 + self.padding[0]
+                        txt_y = (bmp_h - txt_h) / 2 + border[1] + self.padding[0]
                     else:
-                        txt_y = self.padding[0]
+                        txt_y = border[1] + self.padding[0]
 
             if position == 'right':
                 if self.center:
@@ -466,14 +435,14 @@ class CustomButton(wx.Panel):
                     txt_x = (w - txt_w - bmp_w) / 2
                     txt_y = (h - txt_h) / 2
                 else:
-                    bmp_x = self.padding[3] + txt_w
-                    bmp_y = self.padding[0]
+                    bmp_x = border[1] + self.padding[3] + txt_w
+                    bmp_y = border[1] + self.padding[0]
 
                     txt_x = self.padding[3]
                     if bmp_h > txt_h:
-                        txt_y = (bmp_h - txt_h) / 2 + self.padding[0]
+                        txt_y = (bmp_h - txt_h) / 2 + border[1] + self.padding[0]
                     else:
-                        txt_y = self.padding[0]
+                        txt_y = border[1] + self.padding[0]
 
             elif position == 'top':
                 if self.center:
@@ -484,17 +453,17 @@ class CustomButton(wx.Panel):
                     txt_y = (h - bmp_h - txt_h) / 2 + bmp_h
                 else:
                     if bmp_w > txt_w:
-                        bmp_x = self.padding[3]
-                        bmp_y = self.padding[0]
+                        bmp_x = border[1] + self.padding[3]
+                        bmp_y = border[1] + self.padding[0]
 
-                        txt_x = (bmp_w - txt_w) / 2 + self.padding[3]
-                        txt_y = self.padding[0] + bmp_h
+                        txt_x = (bmp_w - txt_w) / 2 + border[1] + self.padding[3]
+                        txt_y = border[1] + self.padding[0] + bmp_h
                     else:
-                        bmp_x = (txt_w - bmp_w) / 2 + self.padding[3]
-                        bmp_y = self.padding[0]
+                        bmp_x = (txt_w - bmp_w) / 2 + border[1] + self.padding[3]
+                        bmp_y = border[1] + self.padding[0]
 
-                        txt_x = self.padding[3]
-                        txt_y = self.padding[0] + bmp_h
+                        txt_x = border[1] + self.padding[3]
+                        txt_y = border[1] + self.padding[0] + bmp_h
 
             elif position == 'bottom':
                 if self.center:
@@ -505,17 +474,17 @@ class CustomButton(wx.Panel):
                     txt_y = (h - txt_h - bmp_h) / 2
                 else:
                     if bmp_w > txt_w:
-                        bmp_x = self.padding[3]
-                        bmp_y = self.padding[0] + txt_h
+                        bmp_x = border[1] + self.padding[3]
+                        bmp_y = border[1] + self.padding[0] + txt_h
 
-                        txt_x = (bmp_w - txt_w) / 2 + self.padding[3]
-                        txt_y = self.padding[0]
+                        txt_x = (bmp_w - txt_w) / 2 + border[1] + self.padding[3]
+                        txt_y = border[1] + self.padding[0]
                     else:
-                        bmp_x = (txt_w - bmp_w) / 2 + self.padding[3]
-                        bmp_y = self.padding[0] + txt_h
+                        bmp_x = (txt_w - bmp_w) / 2 + border[1] + self.padding[3]
+                        bmp_y = border[1] + self.padding[0] + txt_h
 
-                        txt_x = self.padding[3]
-                        txt_y = self.padding[0]
+                        txt_x = border[1] + self.padding[3]
+                        txt_y = border[1] + self.padding[0]
 
             gcdc.DrawBitmap(bmp[0], bmp_x, bmp_y)
         else:
@@ -523,8 +492,8 @@ class CustomButton(wx.Panel):
                 txt_x = (w - txt_w) / 2
                 txt_y = (h - txt_h) / 2
             else:
-                txt_x = self.padding[3]
-                txt_y = self.padding[0]
+                txt_x = border[1] + self.padding[3]
+                txt_y = border[1] + self.padding[0]
 
         # Text shadow
         if self.mouse_down and self.txt_shadow_mouse_down is not None:
@@ -560,3 +529,107 @@ class CustomButton(wx.Panel):
 
         # Draw text
         gcdc.DrawText(self.label, txt_x, txt_y)
+
+
+    def DoGetBestSize(self):
+        gcdc = wx.ClientDC(self)
+
+
+        # Set font.
+        if self.mouse_down and self.font_mouse_down is not None:
+            gcdc.SetFont(self.font_mouse_down)
+        elif self.mouse_in and self.font_hover is not None:
+            gcdc.SetFont(self.font_hover)
+        elif self.focus and self.font_focus is not None:
+            gcdc.SetFont(self.font_focus)
+        else:
+            gcdc.SetFont(self.font_normal)
+
+
+        # Set border variables.
+
+        # Mouse down
+        if self.mouse_down and self.border_mouse_down is not None:
+            if self.border_mouse_down[0] == 0:
+                border = ('#000000', 0)
+            else:
+                border = (self.border_mouse_down[1], self.border_mouse_down[0], wx.SOLID)
+            radius = self.border_mouse_down[2]
+
+        # Focus
+        elif self.focus and self.border_focus is not None:
+            if self.border_focus[0] == 0:
+                border = ('#000000', 0)
+            else:
+                border = (self.border_focus[1], self.border_focus[0], wx.SOLID)
+            radius = self.border_focus[2]
+
+        # Hover
+        elif self.mouse_in and self.border_hover is not None:
+            if self.border_hover[0] == 0:
+                border = ('#000000', 0)
+            else:
+                border = (self.border_hover[1], self.border_hover[0], wx.SOLID)
+            radius = self.border_hover[2]
+
+        # Normal
+        elif self.border is not None:
+            if self.border[0] == 0:
+                border = ('#000000', 0)
+            else:
+                border = (self.border[1], self.border[0], wx.SOLID)
+            radius = self.border[2]
+
+        # No border
+        else:
+            border = ('#000000', 0)
+            radius = 0
+
+
+        # Txt and bmp sizes.
+
+        txt_w, txt_h = gcdc.GetTextExtent(self.label)
+
+        if self.mouse_down and self.bmp_mouse_down is not None:
+            bmp = self.bmp_normal
+            bmp_w, bmp_h = bmp[0].GetSize()
+            position = bmp[1]
+        elif self.focus and self.bmp_focus is not None:
+            bmp = self.bmp_focus
+            bmp_w, bmp_h = bmp[0].GetSize()
+            position = bmp[1]
+        elif self.mouse_in and self.bmp_hover is not None:
+            bmp = self.bmp_hover
+            bmp_w, bmp_h = bmp[0].GetSize()
+            position = bmp[1]
+        elif self.bmp_normal is not None:
+            bmp = self.bmp_normal
+            bmp_w, bmp_h = bmp[0].GetSize()
+            position = bmp[1]
+        else:
+            bmp = False
+
+        if bmp:
+            if position == 'left' or position == 'right':
+                if bmp_h > txt_h:
+                    size = (border[1] + self.padding[3] + bmp_w + txt_w + self.padding[1] + border[1],
+                            border[1] + self.padding[0] + bmp_h + self.padding[2] + border[1])
+                else:
+                    size = (border[1] + self.padding[3] + bmp_w + txt_w + self.padding[1] + border[1],
+                            border[1] + self.padding[0] + txt_h + self.padding[2] + border[1])
+            else:
+                if bmp_w > txt_w:
+                    size = (border[1] + self.padding[3] + bmp_w + self.padding[1] + border[1],
+                            border[1] + self.padding[0] + bmp_h + txt_h + self.padding[2] + border[1])
+                else:
+                    size = (border[1] + self.padding[3] + txt_w + self.padding[1] + border[1],
+                            border[1] + self.padding[0] + bmp_h + txt_h + self.padding[2] + border[1])
+        else:
+            size = (border[1] + self.padding[3] + txt_w + self.padding[1] + border[1],
+                    border[1] + self.padding[0] + txt_h + self.padding[2] + border[1])
+
+
+        if 'phoenix' in wx.PlatformInfo:
+            return wx.Size(size)
+        else:
+            return wx.Size(size[0], size[1])

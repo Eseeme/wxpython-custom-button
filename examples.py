@@ -297,8 +297,6 @@ class Frame(wx.Frame):
 
 
         pnl.SetSizer(pnl_sizer)
-        pnl.SendSizeEvent()
-
 
         sizer.Add(pnl)
         self.SetSizerAndFit(sizer)
