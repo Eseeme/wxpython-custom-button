@@ -1,4 +1,4 @@
-wxpython-custom-button
+wxPython Custom Button
 ======================
 
 Español:
@@ -57,7 +57,8 @@ Examples
 -
     set_border(normal (px, color, radius), [hover], [focus], [mouse_down])
     
-    Example:
+    Examples:
+    set_border(None)
     set_border((1, '#333333', 5), (1, '#666666', 5), ... etc)
 -
     set_font(normal, [hover], [focus], [mouse_down])
