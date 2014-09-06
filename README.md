@@ -14,7 +14,8 @@ Classe pra criar botões personalizados no wxPython. Podem usar livremente nos s
 Examples
 --------
 
-
+    CustomButton(parent, wx.ID_ANY, 'Press me!')
+-
     set_label(label)
     
     Example:
